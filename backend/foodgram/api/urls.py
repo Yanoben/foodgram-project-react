@@ -2,40 +2,40 @@ from django.urls import include, path
 from rest_framework.authtoken import views
 from rest_framework.routers import SimpleRouter
 
-from .views import (APIGetToken, APISignup, CategoryViewSet, CommentsViewSet,
-                    GenreViewSet, ReviewViewSet, TitleViewSet, UsersViewSet,)
+from .views import (APIGetToken, APISignup, TagsViewSet, CommentsViewSet,
+                    IngredientsViewSet, ReviewViewSet, RecipesViewSet,
+                    UsersViewSet,)
 
-router_v1 = SimpleRouter()
+router = SimpleRouter()
 
 app_name = 'api'
 
-router_v1.register(r'titles/(?P<title_id>\d+)/reviews',
-                   ReviewViewSet, basename='reviews')
-router_v1.register(
+router.register(r'titles/(?P<title_id>\d+)/reviews',
+                ReviewViewSet, basename='reviews')
+router.register(
     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
     CommentsViewSet, basename='comments')
-router_v1.register(r'users',
-                   UsersViewSet, basename='users')
+router.register(r'users', UsersViewSet, basename='users')
 
-router_v1.register(
-    'categories',
-    CategoryViewSet,
-    basename='сategories'
+router.register(
+    'tags',
+    TagsViewSet,
+    basename='tags'
 )
-router_v1.register(
-    'titles',
-    TitleViewSet,
-    basename='titles'
+router.register(
+    'recipes',
+    RecipesViewSet,
+    basename='recipes'
 )
-router_v1.register(
-    'genres',
-    GenreViewSet,
-    basename='genres'
+router.register(
+    'ingredients',
+    IngredientsViewSet,
+    basename='ingredients'
 )
 
 urlpatterns = [
-    path('v1/auth/token/', APIGetToken.as_view(), name='get_token'),
-    path('v1/', include(router_v1.urls)),
-    path('v1/api-token-auth/', views.obtain_auth_token, name='auth_token'),
-    path('v1/auth/signup/', APISignup.as_view(), name='signup')
+    path('auth/token/', APIGetToken.as_view(), name='get_token'),
+    path('', include(router.urls)),
+    path('api-token-auth/', views.obtain_auth_token, name='auth_token'),
+    path('auth/signup/', APISignup.as_view(), name='signup'),
 ]
