@@ -2,20 +2,18 @@ from django.urls import include, path
 from rest_framework.authtoken import views
 from rest_framework.routers import SimpleRouter
 
-from .views import (APIGetToken, APISignup, TagsViewSet, CommentsViewSet,
-                    IngredientsViewSet, ReviewViewSet, RecipesViewSet,
-                    UsersViewSet,)
+from .views import APIGetToken, APISignup, RecipesViewSet, TagsViewSet
 
 router = SimpleRouter()
 
 app_name = 'api'
 
-router.register(r'titles/(?P<title_id>\d+)/reviews',
-                ReviewViewSet, basename='reviews')
-router.register(
-    r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
-    CommentsViewSet, basename='comments')
-router.register(r'users', UsersViewSet, basename='users')
+# router.register(r'titles/(?P<title_id>\d+)/reviews',
+#                 ReviewViewSet, basename='reviews')
+# router.register(
+#     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
+#     CommentsViewSet, basename='comments')
+# router.register(r'users', UsersViewSet, basename='users')
 
 router.register(
     'tags',
@@ -27,11 +25,11 @@ router.register(
     RecipesViewSet,
     basename='recipes'
 )
-router.register(
-    'ingredients',
-    IngredientsViewSet,
-    basename='ingredients'
-)
+# router.register(
+#     'ingredients',
+#     IngredientsViewSet,
+#     basename='ingredients'
+# )
 
 urlpatterns = [
     path('auth/token/', APIGetToken.as_view(), name='get_token'),

@@ -1,13 +1,15 @@
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db import models
 from django.db.models.fields import TextField
+from colorfield.fields import ColorField
 
-User = get_user_model()
+User = settings.AUTH_USER_MODEL
 
 
 class Tags(models.Model):
     name = models.CharField(max_length=20)
-    slug = models.SlugField(unique=True)
+    color = ColorField(default='#FF0000')
+    slug = models.SlugField(unique=True, verbose_name='tags_slug')
 
 
 class Ingredients(models.Model):
@@ -21,6 +23,7 @@ class Recipes(models.Model):
                                related_name='recipes')
     title = models.CharField(max_length=50)
     image = models.ImageField()
-    ingredients = models.ForeignKey(Ingredients, related_name='recipes')
-    tag = models.Model(Tags)
+    ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE,
+                                    related_name='recipes')
+    tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
     ready_time = models.TimeField()
