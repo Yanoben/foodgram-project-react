@@ -10,19 +10,16 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.filters import TitleFilter
+from api.filters import RecipesFilter
 from .mixins import ModelMixinSet
 from .permissions import (AdminModeratorAuthorPermission, AdminOnly,
                           IsAdminUserOrReadOnly)
 from app.models import Tags, Ingredients, Recipes
-# from .serializers import (CategorySerializer, CommentsSerializer,
-#                           GenreSerializer, GetTokenSerializer,
-#                           NotAdminSerializer, ReviewSerializer,
-#                           SignupSerializer, TitleReadSerializer,
-#                           TitleWriteSerializer, UsersSerializer)
 from .serializers import (SignupSerializer, GetTokenSerializer,
-                          RecipesSerializer, TagsSerializer)
+                          RecipesSerializer, TagsSerializer,
+                          IngredSerializer, UsersSerializer)
 from django.conf import settings
+from users.models import UserProfile
 
 
 User = settings.AUTH_USER_MODEL
@@ -31,8 +28,7 @@ User = settings.AUTH_USER_MODEL
 class TagsViewSet(ModelMixinSet):
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
-    permission_classes = (IsAdminUserOrReadOnly,
-                          AdminModeratorAuthorPermission)
+    permission_classes = (IsAdminUserOrReadOnly,)
     lookup_field = 'slug'
     filter_backends = [SearchFilter, ]
     search_fields = ['name', ]
@@ -40,7 +36,7 @@ class TagsViewSet(ModelMixinSet):
 
 class IngredientsViewSet(ModelMixinSet):
     queryset = Ingredients.objects.all()
-    # serializer_class = GenreSerializer
+    serializer_class = IngredSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
     lookup_field = 'slug'
     filter_backends = [SearchFilter, ]
@@ -51,6 +47,9 @@ class RecipesViewSet(ModelViewSet):
     queryset = Recipes.objects.all()
     permission_classes = (IsAdminUserOrReadOnly,)
     serializer_class = RecipesSerializer
+    pagination_class = PageNumberPagination
+    filter_class = RecipesFilter
+    # search_fields = ['title', ]
 
 
 class APISignup(APIView):
@@ -80,29 +79,30 @@ class APIGetToken(APIView):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
-# class UsersViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     serializer_class = UsersSerializer
-#     permission_classes = (IsAuthenticated, AdminOnly,)
-#     lookup_field = 'username'
-#     filter_backends = [SearchFilter, ]
-#     search_fields = ('username', )
-#     pagination_class = PageNumberPagination
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UsersSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    lookup_field = 'username'
+    filter_backends = [SearchFilter, ]
+    search_fields = ('username', )
+    pagination_class = PageNumberPagination
 
-#     @action(methods=['GET', 'PATCH'], detail=False,
-#             permission_classes=[IsAuthenticated, ],
-#             url_path='me')
-#     def current_user(self, request):
-#         if request.method == 'PATCH':
-#             if request.user.is_admin:
-#                 serializer = UsersSerializer(request.user, data=request.data,
-#                                              partial=True)
-#             else:
-#                 serializer = NotAdminSerializer(request.user,
-#                                                 data=request.data,
-#                                                 partial=True)
-#             serializer.is_valid(raise_exception=True)
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         serializer = UsersSerializer(request.user)
-#         return Response(serializer.data)
+
+    # @action(methods=['GET', 'PATCH'], detail=False,
+    #         permission_classes=[IsAuthenticated, ],
+    #         url_path='me')
+    # def current_user(self, request):
+    #     if request.method == 'PATCH':
+    #         if request.user.is_admin:
+    #             serializer = UsersSerializer(request.user, data=request.data,
+    #                                          partial=True)
+    #         else:
+    #             serializer = NotAdminSerializer(request.user,
+    #                                             data=request.data,
+    #                                             partial=True)
+    #         serializer.is_valid(raise_exception=True)
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     serializer = UsersSerializer(request.user)
+    #     return Response(serializer.data)

@@ -14,16 +14,31 @@ class Tags(models.Model):
 
 class Ingredients(models.Model):
     name = models.CharField(max_length=100)
-    amount = models.IntegerField(help_text='Количество')
-    units = TextField(help_text='Единицы измерения')
+    measurement_unit = TextField(default='Kg')
 
 
 class Recipes(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                related_name='recipes')
-    title = models.CharField(max_length=50)
-    image = models.ImageField()
-    ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE,
-                                    related_name='recipes')
+    ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE,)
     tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
-    ready_time = models.TimeField()
+    image = models.ImageField()
+    name = models.CharField(default='Food', max_length=200)
+    text = models.TextField(default='Text')
+    cooking_time = models.IntegerField(default='1')
+    pub_date = models.DateTimeField(blank=True, null=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ['-pub_date', ]
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(User,
+                             on_delete=models.CASCADE,
+                             related_name='follower')
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name='following')
+
+    class Meta:
+        unique_together = ('user', 'author',)
