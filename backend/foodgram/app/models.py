@@ -24,6 +24,8 @@ class Recipes(models.Model):
     tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
     image = models.ImageField()
     name = models.CharField(default='Food', max_length=200)
+    is_favorited = models.BooleanField(default=False)
+    is_in_shopping_cart = models.BooleanField(default=False)
     text = models.TextField(default='Text')
     cooking_time = models.IntegerField(default='1')
     pub_date = models.DateTimeField(blank=True, null=True, auto_now_add=True)

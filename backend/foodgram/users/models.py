@@ -17,8 +17,9 @@ CHOICES = (
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=150, unique=True)
-    firstname = models.CharField(max_length=50)
-    secondname = models.CharField(max_length=50)
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    is_subscribed = models.BooleanField(default=False)
     role = models.CharField(max_length=16, choices=CHOICES,
                             default=USER, blank=True)
 
