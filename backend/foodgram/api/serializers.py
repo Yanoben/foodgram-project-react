@@ -35,29 +35,52 @@ class RecipesSerializer(serializers.ModelSerializer):
 
 class SignupSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('email', 'username')
+        model = UserProfile
+        fields = '__all__'
 
 
 class GetTokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
-    confirmation_code = serializers.IntegerField()
+    password = serializers.CharField()
+    email = serializers.EmailField()
 
     class Meta:
-        model = User
-        fields = ('username', 'confirmation_code')
+        model = UserProfile
+        fields = ('password', 'email')
 
 
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('username', 'email', 'first_name',
-                  'last_name', 'role')
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed')
 
 
-class NotAdminSerializer(serializers.ModelSerializer):
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
+    old_password = serializers.CharField(write_only=True, required=True)
+
     class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name',
-                  'last_name', 'role')
-        read_only_fields = ('role',)
+        model = UserProfile
+        fields = ('old_password', 'password', 'password2')
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError(
+                {"password": "Password fields didn't match."})
+
+        return attrs
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError(
+                {"old_password": "Old password is not correct"})
+        return value
+
+    def update(self, instance, validated_data):
+
+        instance.set_password(validated_data['password'])
+        instance.save()
+
+        return instance

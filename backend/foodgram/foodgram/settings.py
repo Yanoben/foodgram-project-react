@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'rest_framework_simplejwt',
     'colorfield',
@@ -132,6 +133,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': (
         'rest_framework.pagination.PageNumberPagination'),
     'PAGE_SIZE': 6,
+}
+
+DJOSER = {
+    'PERMISSTONS': {
+        'user_list': ['rest_framework.permissions.Allowany'],
+    }
 }
 
 AUTH_USER_MODEL = 'users.UserProfile'

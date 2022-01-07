@@ -4,7 +4,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -12,14 +12,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import RecipesFilter
 from .mixins import ModelMixinSet
-from .permissions import (AdminModeratorAuthorPermission, AdminOnly,
+from .permissions import (AdminAuthorPermission, AdminOnly,
                           IsAdminUserOrReadOnly)
 from app.models import Tags, Ingredients, Recipes
 from .serializers import (SignupSerializer, GetTokenSerializer,
                           RecipesSerializer, TagsSerializer,
-                          IngredSerializer, UsersSerializer)
+                          IngredSerializer, UsersSerializer,
+                          ChangePasswordSerializer)
 from django.conf import settings
 from users.models import UserProfile
+from rest_framework import generics
 
 
 User = settings.AUTH_USER_MODEL
@@ -67,42 +69,40 @@ class APIGetToken(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         try:
-            user = User.objects.get(username=data['username'])
-        except User.DoesNotExist:
+            user = UserProfile.objects.get(username=data['username'])
+        except UserProfile.DoesNotExist:
             return Response({'username': 'User not found'},
                             status=status.HTTP_404_NOT_FOUND)
-        if data.get('confirmation_code') == user.confirmation_code:
+        if data.get('password') == user.password:
             token = RefreshToken.for_user(user).access_token
             return Response({'token': str(token)},
                             status=status.HTTP_201_CREATED)
-        return Response({'confirmation_code': 'Wrong confirmation code!'},
+        return Response({'Password': 'Wrong password!'},
                         status=status.HTTP_400_BAD_REQUEST)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
-    lookup_field = 'username'
     filter_backends = [SearchFilter, ]
     search_fields = ('username', )
     pagination_class = PageNumberPagination
 
+    def create(self, request):
+        serializer = UsersSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(methods=['GET', 'PATCH'], detail=False,
-    #         permission_classes=[IsAuthenticated, ],
-    #         url_path='me')
-    # def current_user(self, request):
-    #     if request.method == 'PATCH':
-    #         if request.user.is_admin:
-    #             serializer = UsersSerializer(request.user, data=request.data,
-    #                                          partial=True)
-    #         else:
-    #             serializer = NotAdminSerializer(request.user,
-    #                                             data=request.data,
-    #                                             partial=True)
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-    #     serializer = UsersSerializer(request.user)
-    #     return Response(serializer.data)
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'create':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = (AdminAuthorPermission, IsAuthenticated)
+        return [permission() for permission in permission_classes]
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+    queryset = UserProfile.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ChangePasswordSerializer
