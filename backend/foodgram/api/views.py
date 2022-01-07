@@ -1,7 +1,5 @@
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,9 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import RecipesFilter
-from .mixins import ModelMixinSet
-from .permissions import (AdminAuthorPermission, AdminOnly,
-                          IsAdminUserOrReadOnly)
+from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
 from app.models import Tags, Ingredients, Recipes
 from .serializers import (SignupSerializer, GetTokenSerializer,
                           RecipesSerializer, TagsSerializer,
@@ -27,22 +23,23 @@ from rest_framework import generics
 User = settings.AUTH_USER_MODEL
 
 
-class TagsViewSet(ModelMixinSet):
+class TagsViewSet(ModelViewSet):
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
-    lookup_field = 'slug'
-    filter_backends = [SearchFilter, ]
-    search_fields = ['name', ]
+
+    def get_permissions(self):
+        if self.action == 'list':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = (IsAdminUserOrReadOnly,)
+        return [permission() for permission in permission_classes]
 
 
-class IngredientsViewSet(ModelMixinSet):
+class IngredientsViewSet(ModelViewSet):
     queryset = Ingredients.objects.all()
     serializer_class = IngredSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
-    lookup_field = 'slug'
-    filter_backends = [SearchFilter, ]
-    search_fields = ['name', ]
+    permission_classes = (IsAuthenticated,)
 
 
 class RecipesViewSet(ModelViewSet):

@@ -2,8 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.fields import TextField
 from colorfield.fields import ColorField
-
-User = settings.AUTH_USER_MODEL
+from users.models import UserProfile
 
 
 class Tags(models.Model):
@@ -18,10 +17,10 @@ class Ingredients(models.Model):
 
 
 class Recipes(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE,
+    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE,
                                related_name='recipes')
-    ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE,)
-    tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
+    ingredients = models.ForeignKey(Ingredients, on_delete=models.DO_NOTHING)
+    tags = models.ForeignKey(Tags, on_delete=models.DO_NOTHING)
     image = models.ImageField()
     name = models.CharField(default='Food', max_length=200)
     is_favorited = models.BooleanField(default=False)
@@ -35,10 +34,10 @@ class Recipes(models.Model):
 
 
 class Follow(models.Model):
-    user = models.ForeignKey(User,
+    user = models.ForeignKey(UserProfile,
                              on_delete=models.CASCADE,
                              related_name='follower')
-    author = models.ForeignKey(User,
+    author = models.ForeignKey(UserProfile,
                                on_delete=models.CASCADE,
                                related_name='following')
 

@@ -11,7 +11,7 @@ User = settings.AUTH_USER_MODEL
 class TagsSerializer(serializers.ModelSerializer):
 
     class Meta:
-        exclude = ['id']
+        fields = ('id', 'name', 'color', 'slug')
         model = Tags
         lookup_field = 'slug'
         extra_kwargs = {
@@ -22,14 +22,16 @@ class TagsSerializer(serializers.ModelSerializer):
 class IngredSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
         model = Ingredients
 
 
 class RecipesSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'tags', 'author', 'ingredients',
+                  'is_favorited', 'is_in_shopping_cart',
+                  'name', 'image', 'text', 'cooking_time')
         model = Recipes
 
 
