@@ -3,7 +3,7 @@ import django_filters
 from app.models import Recipes
 
 
-class RecipesFilter(django_filters.FilterSet):
+class RecipeTagFilter(django_filters.FilterSet):
     tags = django_filters.CharFilter(field_name='tags__slug')
     is_favorited = django_filters.NumberFilter(method='filter_is_favorited')
     is_in_shopping_cart = django_filters.NumberFilter(

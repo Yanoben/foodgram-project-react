@@ -7,13 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from api.filters import RecipesFilter
+from django.shortcuts import get_object_or_404
+from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
 from app.models import Tags, Ingredients, Recipes
 from .serializers import (SignupSerializer, GetTokenSerializer,
-                          RecipesSerializer, TagsSerializer,
-                          IngredSerializer, UsersSerializer,
+                          RecipesSerializer, TagSerializer,
+                          IngredientSerializer, UsersSerializer,
                           ChangePasswordSerializer)
 from django.conf import settings
 from users.models import UserProfile
@@ -25,7 +25,7 @@ User = settings.AUTH_USER_MODEL
 
 class TagsViewSet(ModelViewSet):
     queryset = Tags.objects.all()
-    serializer_class = TagsSerializer
+    serializer_class = TagSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
 
     def get_permissions(self):
@@ -38,17 +38,46 @@ class TagsViewSet(ModelViewSet):
 
 class IngredientsViewSet(ModelViewSet):
     queryset = Ingredients.objects.all()
-    serializer_class = IngredSerializer
+    serializer_class = IngredientSerializer
     permission_classes = (IsAuthenticated,)
 
 
-class RecipesViewSet(ModelViewSet):
-    queryset = Recipes.objects.all()
-    permission_classes = (IsAdminUserOrReadOnly,)
+class RecipesViewSet(viewsets.ModelViewSet):
     serializer_class = RecipesSerializer
     pagination_class = PageNumberPagination
-    filter_class = RecipesFilter
-    # search_fields = ['title', ]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeTagFilter
+    http_method_names = ('get', 'post', 'patch', 'delete')
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        return queryset
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Recipes.objects.all()
+        tags = self.request.data.get('tags')
+        if tags:
+            queryset = queryset and Recipes.objects.filter(tags__slug__in=tags)
+        if user.is_anonymous:
+            return queryset
+        try:
+            recipe_id = self.kwargs['pk']
+            return Recipes.objects.get(id=recipe_id)
+        except KeyError:
+            recipe_id = None
+        author_id = self.request.data.get('author')
+        if author_id:
+            queryset = (
+                queryset and Recipes.objects.filter(
+                    author=get_object_or_404(User, id=author_id))
+                    )
+
+        if self.request.data.get('is_favorited') == 1:
+            queryset = queryset and user.favorite_recipes.all()
+        if self.request.data.get('is_in_shopping_cart') == 1:
+            queryset = queryset and user.shopping_cart_recipes.all()
+        return queryset
 
 
 class APISignup(APIView):
