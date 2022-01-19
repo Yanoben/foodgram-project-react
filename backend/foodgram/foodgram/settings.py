@@ -1,8 +1,8 @@
 import os
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 SECRET_KEY = 'o=-jpaq9h)&rvw&wv965(8mx&pkc+y-2p)ku9kdpkm(8^#ai)n'
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)

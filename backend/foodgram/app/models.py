@@ -1,8 +1,8 @@
-# from django.conf import settings
 from django.db import models
 from django.db.models.fields import TextField
 from colorfield.fields import ColorField
 from users.models import UserProfile
+from django.core.validators import number_validator
 
 
 class Tags(models.Model):
@@ -52,17 +52,56 @@ class RecipesTag(models.Model):
 class RecipesIngredient(models.Model):
     recipes = models.ForeignKey(Recipes, on_delete=models.CASCADE)
     ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE)
+    amount = models.IntegerField(
+        validators=[number_validator]
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('ingredients', 'recipes'),
+                name='ingredient_recipe'
+            )
+        ]
 
     def __str__(self):
         return f'{self.recipes} {self.ingredients}'
 
 
 class FavoriteRecipes(models.Model):
-    pass
+    user = models.ForeignKey(UserProfile,
+                             on_delete=models.CASCADE,
+                             related_name='favorite_user')
+    recipe = models.ForeignKey(Recipes,
+                               on_delete=models.CASCADE,
+                               related_name='favorite_recipe')
+
+    class Meta:
+        ordering = ['-user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='user_recipe_favorite'
+            )
+        ]
 
 
 class ShoppingCart(models.Model):
-    pass
+    user = models.ForeignKey(UserProfile,
+                             on_delete=models.CASCADE,
+                             related_name='shopping')
+    recipe = models.ForeignKey(Recipes,
+                               on_delete=models.CASCADE,
+                               related_name='shopping')
+
+    class Meta:
+        ordering = ['-user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='user_recipe_shopping'
+            )
+        ]
 
 
 class Follow(models.Model):
