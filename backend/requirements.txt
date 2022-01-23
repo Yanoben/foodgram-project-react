@@ -48,3 +48,5 @@ psycopg2-binary==2.8.6
 sqlparse==0.3.1
 python-dotenv
 django-colorfield
+nano
+drf_extra_fields

@@ -2,7 +2,6 @@ from django.db import models
 from django.db.models.fields import TextField
 from colorfield.fields import ColorField
 from users.models import UserProfile
-from django.core.validators import number_validator
 
 
 class Tags(models.Model):
@@ -27,34 +26,24 @@ class Recipes(models.Model):
                                related_name='recipes')
     ingredients = models.ManyToManyField(Ingredients,
                                          through='RecipesIngredient')
-    tags = models.ManyToManyField(Tags, through='RecipesTag')
+    tags = models.ForeignKey(Tags, on_delete=models.CASCADE,
+                             related_name='recipes')
     image = models.ImageField()
-    name = models.CharField(default='Food', max_length=200)
+    name = models.CharField(default='name', max_length=200)
     text = models.TextField(default='Text')
     cooking_time = models.IntegerField(default='1')
-    pub_date = models.DateTimeField(blank=True, null=True, auto_now_add=True)
 
     class Meta:
-        ordering = ['-pub_date', ]
+        ordering = ['-id']
 
     def __str__(self):
         return self.name
 
 
-class RecipesTag(models.Model):
-    recipes = models.ForeignKey(Recipes, on_delete=models.CASCADE)
-    tags = models.ForeignKey(Tags, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f'{self.recipes} {self.tags}'
-
-
 class RecipesIngredient(models.Model):
     recipes = models.ForeignKey(Recipes, on_delete=models.CASCADE)
     ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE)
-    amount = models.IntegerField(
-        validators=[number_validator]
-    )
+    amount = models.IntegerField(default=1)
 
     class Meta:
         constraints = [
@@ -69,39 +58,41 @@ class RecipesIngredient(models.Model):
 
 
 class FavoriteRecipes(models.Model):
-    user = models.ForeignKey(UserProfile,
-                             on_delete=models.CASCADE,
-                             related_name='favorite_user')
-    recipe = models.ForeignKey(Recipes,
-                               on_delete=models.CASCADE,
-                               related_name='favorite_recipe')
+    pass
+    # user = models.ForeignKey(UserProfile,
+    #                          on_delete=models.CASCADE,
+    #                          related_name='favorite_user')
+    # recipes = models.ForeignKey(Recipes, default='recipes',
+    #                             on_delete=models.CASCADE,
+    #                             related_name='favorite_recipe')
 
-    class Meta:
-        ordering = ['-user']
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='user_recipe_favorite'
-            )
-        ]
+    # class Meta:
+    #     ordering = ['-user']
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=('user', 'recipes'),
+    #             name='user_recipe_favorite'
+    #         )
+    #     ]
 
 
 class ShoppingCart(models.Model):
-    user = models.ForeignKey(UserProfile,
-                             on_delete=models.CASCADE,
-                             related_name='shopping')
-    recipe = models.ForeignKey(Recipes,
-                               on_delete=models.CASCADE,
-                               related_name='shopping')
+    pass
+    # user = models.ForeignKey(UserProfile,
+    #                          on_delete=models.CASCADE,
+    #                          related_name='shopping')
+    # recipe = models.ForeignKey(Recipes,
+    #                            on_delete=models.CASCADE,
+    #                            related_name='shopping')
 
-    class Meta:
-        ordering = ['-user']
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipe'),
-                name='user_recipe_shopping'
-            )
-        ]
+    # class Meta:
+    #     ordering = ['-user']
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=('user', 'recipe'),
+    #             name='user_recipe_shopping'
+    #         )
+    #     ]
 
 
 class Follow(models.Model):
