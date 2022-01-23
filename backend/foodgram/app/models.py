@@ -14,11 +14,13 @@ class Tags(models.Model):
 
 
 class Ingredients(models.Model):
-    name = models.CharField(max_length=100)
-    measurement_unit = TextField(default='Kg')
+    name = models.CharField(
+        max_length=100, verbose_name='name', blank=False)
+    measurement_unit = models.CharField(
+        max_length=10, verbose_name='measurement_unit', blank=False)
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'
 
 
 class Recipes(models.Model):
@@ -41,15 +43,15 @@ class Recipes(models.Model):
 
 
 class RecipesIngredient(models.Model):
-    recipes = models.ForeignKey(Recipes, on_delete=models.CASCADE)
-    ingredients = models.ForeignKey(Ingredients, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipes, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredients, on_delete=models.CASCADE)
     amount = models.IntegerField(default=1)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=('ingredients', 'recipes'),
-                name='ingredient_recipe'
+                fields=('ingredient', 'recipe'),
+                name='unique_ingredient_recipe'
             )
         ]
 

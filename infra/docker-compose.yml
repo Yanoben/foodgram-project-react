@@ -34,8 +34,6 @@ services:
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
       - ../frontend/build/static:/var/html/static/
-      - static_value:/var/html/static/
-      - media_value:/var/html/media/
     restart: always
     depends_on:
       - frontend

@@ -11,10 +11,10 @@ from django.shortcuts import get_object_or_404
 from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
 from app.models import Tags, Ingredients, Recipes
-from .serializers import (SignupSerializer, GetTokenSerializer,
+from .serializers import (CreateRecipeSerializer, SignupSerializer, GetTokenSerializer,
                           RecipesSerializer, TagSerializer,
                           IngredientSerializer, UsersSerializer,
-                          ChangePasswordSerializer)
+                          ChangePasswordSerializer, CreateRecipeSerializer)
 from django.conf import settings
 from users.models import UserProfile
 from rest_framework import generics
@@ -43,42 +43,45 @@ class IngredientsViewSet(ModelViewSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipesSerializer
-    pagination_class = PageNumberPagination
     queryset = Recipes.objects.all()
+    permission_classes = (AllowAny,)
     # filter_backends = (DjangoFilterBackend,)
-    # filterset_class = RecipeTagFilter
-    # http_method_names = ('get', 'post', 'patch', 'delete')
+    filterset_class = RecipeTagFilter
 
-    # def get_object(self):
-    #     queryset = self.filter_queryset(self.get_queryset())
-    #     return queryset
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return RecipesSerializer
+        return CreateRecipeSerializer
 
-    # def get_queryset(self):
-    #     user = self.request.user
-    #     queryset = Recipes.objects.all()
-    #     tags = self.request.data.get('tags')
-    #     if tags:
-    #         queryset = queryset and Recipes.objects.filter(tags__slug__in=tags)
-    #     if user.is_anonymous:
-    #         return queryset
-    #     try:
-    #         recipe_id = self.kwargs['pk']
-    #         return Recipes.objects.get(id=recipe_id)
-    #     except KeyError:
-    #         recipe_id = None
-    #     author_id = self.request.data.get('author')
-    #     if author_id:
-    #         queryset = (
-    #             queryset and Recipes.objects.filter(
-    #                 author=get_object_or_404(User, id=author_id))
-    #                 )
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        return queryset
 
-    #     if self.request.data.get('is_favorited') == 1:
-    #         queryset = queryset and user.favorite_recipes.all()
-    #     if self.request.data.get('is_in_shopping_cart') == 1:
-    #         queryset = queryset and user.shopping_cart_recipes.all()
-    #     return queryset
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Recipes.objects.all()
+        tags = self.request.data.get('tags')
+        if tags:
+            queryset = queryset and Recipes.objects.filter(tags__slug__in=tags)
+        if user.is_anonymous:
+            return queryset
+        try:
+            recipe_id = self.kwargs['pk']
+            return Recipes.objects.get(id=recipe_id)
+        except KeyError:
+            recipe_id = None
+        author_id = self.request.data.get('author')
+        if author_id:
+            queryset = (
+                queryset and Recipes.objects.filter(
+                    author=get_object_or_404(User, id=author_id))
+                    )
+
+        if self.request.data.get('is_favorited') == 1:
+            queryset = queryset and user.favorite_recipes.all()
+        if self.request.data.get('is_in_shopping_cart') == 1:
+            queryset = queryset and user.shopping_cart_recipes.all()
+        return queryset
 
 
 class APISignup(APIView):

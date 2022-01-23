@@ -24,12 +24,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djoser',
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
     'rest_framework_simplejwt',
     'colorfield',
-    'djoser',
 ]
 
 MIDDLEWARE = [
@@ -130,9 +130,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'],
-    'DEFAULT_PAGINATION_CLASS': (
-        'rest_framework.pagination.PageNumberPagination'),
-    'PAGE_SIZE': 6,
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
 }
 
 DJOSER = {
