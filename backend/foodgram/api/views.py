@@ -11,8 +11,8 @@ from django.shortcuts import get_object_or_404
 from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
 from app.models import Tags, Ingredients, Recipes
-from .serializers import (CreateRecipeSerializer, SignupSerializer, GetTokenSerializer,
-                          RecipesSerializer, TagSerializer,
+from .serializers import (SignupSerializer, GetTokenSerializer,
+                          RetrieveRecipesSerializer, TagSerializer,
                           IngredientSerializer, UsersSerializer,
                           ChangePasswordSerializer, CreateRecipeSerializer)
 from django.conf import settings
@@ -44,13 +44,13 @@ class IngredientsViewSet(ModelViewSet):
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAdminUserOrReadOnly,)
     # filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeTagFilter
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
-            return RecipesSerializer
+            return RetrieveRecipesSerializer
         return CreateRecipeSerializer
 
     def get_object(self):
