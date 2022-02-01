@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
-from app.models import Tags, Ingredients, Recipes
+from app.models import Follow, Tags, Ingredients, Recipes
 from .serializers import (SignupSerializer, GetTokenSerializer,
                           RetrieveRecipesSerializer, TagSerializer,
                           IngredientSerializer, UsersSerializer,
@@ -18,6 +18,7 @@ from .serializers import (SignupSerializer, GetTokenSerializer,
 from django.conf import settings
 from users.models import UserProfile
 from rest_framework import generics
+# from .pagination import CustomPagination
 
 
 User = settings.AUTH_USER_MODEL
@@ -26,6 +27,7 @@ User = settings.AUTH_USER_MODEL
 class TagsViewSet(ModelViewSet):
     queryset = Tags.objects.all()
     serializer_class = TagSerializer
+    # pagination_class = CustomPagination
     permission_classes = (IsAdminUserOrReadOnly,)
 
     def get_permissions(self):
@@ -44,14 +46,17 @@ class IngredientsViewSet(ModelViewSet):
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
-    permission_classes = (IsAdminUserOrReadOnly,)
-    # filter_backends = (DjangoFilterBackend,)
+    # permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = [AllowAny]
+    serializer_class = RetrieveRecipesSerializer
+    pagination_class = PageNumberPagination
+    filter_backends = (DjangoFilterBackend, SearchFilter)
     filterset_class = RecipeTagFilter
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return RetrieveRecipesSerializer
-        return CreateRecipeSerializer
+        if self.action == 'create' or self.action == 'partial_update':
+            return CreateRecipeSerializer
+        return RetrieveRecipesSerializer
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
@@ -85,6 +90,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class APISignup(APIView):
+
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -99,13 +105,13 @@ class APIGetToken(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         try:
-            user = UserProfile.objects.get(username=data['username'])
+            user = UserProfile.objects.get(email=data['email'])
         except UserProfile.DoesNotExist:
             return Response({'username': 'User not found'},
                             status=status.HTTP_404_NOT_FOUND)
         if data.get('password') == user.password:
             token = RefreshToken.for_user(user).access_token
-            return Response({'token': str(token)},
+            return Response({'auth_token': str(token)},
                             status=status.HTTP_201_CREATED)
         return Response({'Password': 'Wrong password!'},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -116,7 +122,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     serializer_class = UsersSerializer
     filter_backends = [SearchFilter, ]
     search_fields = ('username', )
-    pagination_class = PageNumberPagination
+    # pagination_class = CustomPagination
 
     def create(self, request):
         serializer = UsersSerializer(data=request.data)
@@ -130,6 +136,11 @@ class UsersViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = (AdminAuthorPermission, IsAuthenticated)
         return [permission() for permission in permission_classes]
+
+
+class SubscriptionsViewSet(viewsets.ModelViewSet):
+    queryset = Follow.objects.all()
+    permission_classes = [AllowAny]
 
 
 class ChangePasswordView(generics.UpdateAPIView):

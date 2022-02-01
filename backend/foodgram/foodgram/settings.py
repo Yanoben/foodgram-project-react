@@ -1,3 +1,4 @@
+import email
 import os
 from dotenv import load_dotenv
 
@@ -126,19 +127,27 @@ ROLES = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ),
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS':
         'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 6
 }
 
 DJOSER = {
+    'LOGIN_FIELD': 'email',
+
+    'SERIALIZERS': {
+        'user_create': 'api.serializers.UsersSerializer',
+        'user': 'api.serializers.UsersSerializer',
+        'current_user': 'api.serializers.UsersSerializer',
+    },
+
     'PERMISSTONS': {
+        'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
         'user_list': ['rest_framework.permissions.Allowany'],
-    }
+    },
+    'HIDE_USERS': False,
 }
 
 AUTH_USER_MODEL = 'users.UserProfile'
