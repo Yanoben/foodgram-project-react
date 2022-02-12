@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
@@ -10,11 +11,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
-from app.models import Follow, Tags, Ingredients, Recipes
+from app.models import FavoriteRecipes, Follow, ShoppingCart, Tags, Ingredients, Recipes
 from .serializers import (SignupSerializer, GetTokenSerializer,
                           RetrieveRecipesSerializer, TagSerializer,
                           IngredientSerializer, UsersSerializer,
-                          ChangePasswordSerializer, CreateRecipeSerializer)
+                          ChangePasswordSerializer, CreateRecipeSerializer,
+                          RecipeFollowSerializer)
 from django.conf import settings
 from users.models import UserProfile
 from rest_framework import generics
@@ -48,19 +50,43 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
     # permission_classes = (IsAdminUserOrReadOnly,)
     permission_classes = [AllowAny]
-    serializer_class = RetrieveRecipesSerializer
     pagination_class = PageNumberPagination
-    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeTagFilter
+
+    def perform_create(self, serializer):
+        return serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'partial_update':
             return CreateRecipeSerializer
         return RetrieveRecipesSerializer
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        return queryset
+    # def get_permissions(self):
+    #     if self.action != 'create':
+    #         return (AuthorOrReadOnly(),)
+    #     return super().get_permissions()
+
+    @action(detail=True, methods=['post', 'delete'], )
+    def favorite(self, request, pk):
+        recipe = get_object_or_404(Recipes, pk=pk)
+        if request.method == 'POST':
+            FavoriteRecipes.objects.create(user=request.user, recipes=recipe)
+            data = RecipeFollowSerializer(recipe).data
+            return Response(data)
+
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
+    def shopping_cart(self, request, pk=None):
+        if request.method == 'POST':
+            return self.add_obj(ShoppingCart, request.user, pk)
+        if request.method == 'DELETE':
+            return self.delete_obj(ShoppingCart, request.user, pk)
+        return None
+
+    # def get_object(self):
+    #     queryset = self.filter_queryset(self.get_queryset())
+    #     return queryset
 
     def get_queryset(self):
         user = self.request.user
