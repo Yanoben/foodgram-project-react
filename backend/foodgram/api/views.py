@@ -11,7 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
-from app.models import FavoriteRecipes, Follow, ShoppingCart, Tags, Ingredients, Recipes
+from app.models import Favorite, Follow, ShoppingCart, Tags, Ingredients, Recipes
 from .serializers import (SignupSerializer, GetTokenSerializer,
                           RetrieveRecipesSerializer, TagSerializer,
                           IngredientSerializer, UsersSerializer,
@@ -71,7 +71,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipes, pk=pk)
         if request.method == 'POST':
-            FavoriteRecipes.objects.create(user=request.user, recipes=recipe)
+            Favorite.objects.create(user=request.user, recipe=recipe)
             data = RecipeFollowSerializer(recipe).data
             return Response(data)
 

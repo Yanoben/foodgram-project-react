@@ -149,46 +149,52 @@ class RecipesIngredient(models.Model):
         return f'{self.recipe} {self.ingredient}'
 
 
-class FavoriteRecipes(models.Model):
-    pass
-    # user = models.ForeignKey(
-    #     UserProfile,
-    #     verbose_name="Автор",
-    #     related_name="favorite_user",
-    #     on_delete=models.CASCADE
-    # )
-    # recipes = models.ForeignKey(Recipes, default='recipes',
-    #                             on_delete=models.CASCADE,
-    #                             related_name='favorite_recipe')
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
+    recipe = models.ForeignKey(
+        Recipes,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
 
-    # class Meta:
-    #     ordering = ['-user']
-    #     constraints = [
-    #         models.UniqueConstraint(
-    #             fields=('user', 'recipes'),
-    #             name='user_recipe_favorite'
-    #         )
-    #     ]
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='favorite')
+        ]
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
 
 
 class ShoppingCart(models.Model):
-    pass
-    # user = models.ForeignKey(
-    #     UserProfile,
-    #     related_name="shopping_cart",
-    #     on_delete=models.CASCADE
-    # )
-    # recipe = models.ForeignKey(
-    #     Recipes,
-    #     related_name="shopping_cart",
-    #     on_delete=models.CASCADE
-    # )
+    user = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart'
+    )
+    recipe = models.ForeignKey(
+        Recipes,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart'
+    )
 
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=["user", "recipe"],
-    #                                 name="unique_shopping_list")
-    #     ]
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='shopping_cart')
+        ]
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
 
 
 class Follow(models.Model):
