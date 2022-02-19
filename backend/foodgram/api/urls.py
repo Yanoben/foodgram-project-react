@@ -30,19 +30,14 @@ router.register(
     SubscriptionsViewSet,
     basename='subscriptions'
 )
-# router.register(
-#     'users',
-#     UsersViewSet,
-#     basename='users'
-# )
+router.register(
+    'users',
+    UsersViewSet,
+    basename='users'
+)
 
 urlpatterns = [
-    # path('auth/token/login/', APIGetToken.as_view(), name='get_token'),
-    # path('users/set_password/', ChangePasswordView, name='set_password'),
     path('', include(router.urls)),
-    # path('api-token-auth/', views.obtain_auth_token, name='auth_token'),
-    path('auth/', include('djoser.urls.authtoken')),
     path('', include('djoser.urls')),
-    # path('api-token-auth/', views.obtain_auth_token, name='auth_token'),
-    # path('auth/token/login/', APISignup.as_view(), name='signup')
+    path('auth/', include('djoser.urls.authtoken')),
 ]

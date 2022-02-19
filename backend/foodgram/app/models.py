@@ -63,6 +63,9 @@ class Ingredients(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+    class Meta:
+        verbose_name = 'ingredients'
+
 
 class Recipes(models.Model):
     # author = models.ForeignKey(UserProfile, on_delete=models.CASCADE,
@@ -86,26 +89,26 @@ class Recipes(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredients,
-        verbose_name="Ингредиенты",
+        verbose_name='ingredients',
         related_name="recipes",
         through="RecipesIngredient"
     )
     tags = models.ManyToManyField(
         Tags,
-        verbose_name="Тэги",
+        verbose_name="tags",
         related_name="recipes"
     )
     author = models.ForeignKey(
         UserProfile,
-        verbose_name="Автор",
+        verbose_name="author",
         related_name="recipes",
         on_delete=models.CASCADE
     )
     text = models.TextField(
-        verbose_name="Текст рецепта"
+        verbose_name="text"
     )
     image = models.ImageField(
-        verbose_name="Картинка",
+        verbose_name="image",
         upload_to='media/recipes/images/'
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -119,7 +122,11 @@ class Recipes(models.Model):
     )
 
     class Meta:
+        verbose_name = "recipes"
         ordering = ['-id']
+
+    def __str__(self):
+        return self.name
 
 
 class RecipesIngredient(models.Model):
@@ -139,28 +146,29 @@ class RecipesIngredient(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.recipes} {self.ingredients}'
+        return f'{self.recipe} {self.ingredient}'
 
 
 class FavoriteRecipes(models.Model):
-    user = models.ForeignKey(
-        UserProfile,
-        verbose_name="Автор",
-        related_name="favorite_user",
-        on_delete=models.CASCADE
-    )
-    recipes = models.ForeignKey(Recipes, default='recipes',
-                                on_delete=models.CASCADE,
-                                related_name='favorite_recipe')
+    pass
+    # user = models.ForeignKey(
+    #     UserProfile,
+    #     verbose_name="Автор",
+    #     related_name="favorite_user",
+    #     on_delete=models.CASCADE
+    # )
+    # recipes = models.ForeignKey(Recipes, default='recipes',
+    #                             on_delete=models.CASCADE,
+    #                             related_name='favorite_recipe')
 
-    class Meta:
-        ordering = ['-user']
-        constraints = [
-            models.UniqueConstraint(
-                fields=('user', 'recipes'),
-                name='user_recipe_favorite'
-            )
-        ]
+    # class Meta:
+    #     ordering = ['-user']
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=('user', 'recipes'),
+    #             name='user_recipe_favorite'
+    #         )
+    #     ]
 
 
 class ShoppingCart(models.Model):
@@ -193,3 +201,77 @@ class Follow(models.Model):
 
     class Meta:
         unique_together = ('user', 'author',)
+
+# class User(AbstractUser):
+#     class UserType(models.TextChoices):
+#         ADMIN = 'admin', _('Admin')
+#         USER = 'user', _('User')
+
+#     email = models.EmailField(
+#         verbose_name='Почтовый адрес',
+#         max_length=254,
+#         unique=True,
+#     )
+#     password = models.CharField(
+#         verbose_name='Пароль',
+#         max_length=150,
+#     )
+#     username = models.CharField(
+#         verbose_name='Логин',
+#         max_length=150,
+#         unique=True,
+#     )
+#     first_name = models.CharField(
+#         verbose_name='Имя',
+#         max_length=150,
+#     )
+#     last_name = models.CharField(
+#         verbose_name='Фамилия',
+#         max_length=150,
+#     )
+#     role = models.CharField(
+#         verbose_name='Роль',
+#         max_length=20,
+#         choices=UserType.choices,
+#         default=UserType.USER,
+#     )
+#     USERNAME_FIELD = 'email'
+#     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+#     class Meta:
+#         verbose_name = _('Пользователь')
+#         verbose_name_plural = _('Пользователи')
+#         ordering = ['id']
+
+#     def __str__(self):
+#         return self.get_full_name()
+
+#     @property
+#     def is_admin(self):
+#         return self.role == self.UserType.ADMIN or self.is_staff
+
+
+# class Subscription(models.Model):
+#     subscriber = models.ForeignKey(
+#         User,
+#         related_name='subscriptions',
+#         on_delete=models.CASCADE,
+#     )
+#     subscription = models.ForeignKey(
+#         User,
+#         related_name='subscribers',
+#         on_delete=models.CASCADE,
+#     )
+
+#     class Meta:
+#         verbose_name = 'Список подписок'
+#         verbose_name_plural = 'Списки подписок'
+#         constraints = [
+#             models.UniqueConstraint(
+#                 fields=['subscriber', 'subscription'],
+#                 name='Уникальная запись подписчик - автор',
+#             )
+#         ]
+
+#     def __str__(self):
+#         return f'{self.subscriber} подписан на {self.subscription}'

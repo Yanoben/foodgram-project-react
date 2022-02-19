@@ -1,17 +1,54 @@
 from django_filters.rest_framework import filters, FilterSet
 
-from app.models import Recipes
+from app.models import Recipes, Tags
 
 
 class RecipeTagFilter(FilterSet):
-    is_favorited = filters.BooleanFilter(method="filter_is_favorited")
-    tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
+    # is_favorited = filters.BooleanFilter(method="filter_is_favorited")
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tags.objects.all(),
+    )
+    is_favorited = filters.BooleanFilter(method='get_is_favorited')
+    is_in_shopping_cart = filters.BooleanFilter(
+        method='get_is_in_shopping_cart')
 
-    def filter_is_favorited(self, queryset, name, value):
-        user = self.request.user
-        if value:
-            return Recipes.objects.filter(favorite_recipes__user=user)
-        return queryset
+    class Meta:
+        model = Recipes
+        fields = [
+            'author',
+        ]
+
+    def get_is_favorited(self, queryset, name, value):
+        if not value:
+            return queryset
+        if not self.request.user.is_authenticated:
+            return queryset
+        favorites = self.request.user.favorites.all()
+        return queryset.filter(
+            pk__in=(favorites.values_list('id', flat=True,))
+        )
+
+    def get_is_in_shopping_cart(self, queryset, name, value):
+        if not value:
+            return queryset
+        if not self.request.user.is_authenticated:
+            return queryset
+    #     if not self.request.user.shopping_cart.recipes.exists():
+    #         return queryset
+    #     recipes = (
+    #         self.request.user.shopping_cart.recipes.all()
+    #     )
+    #     return queryset.filter(
+    #         pk__in=(recipes.values_list('id', flat=True))
+    #     )
+
+    # def filter_is_favorited(self, queryset, name, value):
+    #     user = self.request.user
+    #     if value:
+    #         return Recipes.objects.filter(favorite_recipes__user=user)
+    #     return queryset
 
     # class Meta:
     #     model = Recipe
