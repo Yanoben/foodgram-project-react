@@ -1,10 +1,9 @@
 from django.urls import include, path
-from rest_framework.authtoken import views
 from rest_framework.routers import SimpleRouter
 
 from .views import (APIGetToken, ChangePasswordView, RecipesViewSet,
                     TagsViewSet, IngredientsViewSet, UsersViewSet,
-                    APISignup, SubscriptionsViewSet)
+                    APISignup)
 
 router = SimpleRouter()
 
@@ -24,11 +23,6 @@ router.register(
     'ingredients',
     IngredientsViewSet,
     basename='ingredients'
-)
-router.register(
-    'users/subscriptions',
-    SubscriptionsViewSet,
-    basename='subscriptions'
 )
 router.register(
     'users',

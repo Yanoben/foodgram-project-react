@@ -1,7 +1,8 @@
+from django.http import HttpResponse
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
-from rest_framework.filters import SearchFilter
+# from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -9,9 +10,10 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
-from api.filters import RecipeTagFilter
+# from api.filters import RecipeTagFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
-from app.models import Favorite, Follow, ShoppingCart, Tags, Ingredients, Recipes
+from app.models import (Favorite, Follow, RecipesIngredient, ShoppingCart,
+                        Tags, Ingredients, Recipes)
 from .serializers import (SignupSerializer, GetTokenSerializer,
                           RetrieveRecipesSerializer, TagSerializer,
                           IngredientSerializer, UsersSerializer,
@@ -43,6 +45,7 @@ class TagsViewSet(ModelViewSet):
 class IngredientsViewSet(ModelViewSet):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientSerializer
+    pagination_class = None
     permission_classes = (AllowAny,)
 
 
@@ -62,11 +65,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return CreateRecipeSerializer
         return RetrieveRecipesSerializer
 
-    # def get_permissions(self):
-    #     if self.action != 'create':
-    #         return (AuthorOrReadOnly(),)
-    #     return super().get_permissions()
-
     @action(detail=True, methods=['post', 'delete'], )
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipes, pk=pk)
@@ -78,39 +76,40 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
+        recipe = Recipes.objects.get(pk=pk)
         if request.method == 'POST':
-            return self.add_obj(ShoppingCart, request.user, pk)
+            return ShoppingCart.objects.create(
+                user=request.user, recipe=recipe)
         if request.method == 'DELETE':
             return self.delete_obj(ShoppingCart, request.user, pk)
         return None
 
-    # @action(detail=False)
-    # def download_shopping_cart(self, request):
-    #     shop_list = list(
-    #         request.user.user_shopping_list.values_list('recipe__components'))
-    #     for item in range(0, len(shop_list)):
-    #         shop_list[item] = shop_list[item][0]
-    #     ingredients_in_recipes = Amount.objects.in_bulk(shop_list)
-    #     shop_dictary = {}
-    #     for obj in ingredients_in_recipes.values():
-    #         ingredient = obj.ingredient
-    #         amount = obj.amount
-    #         if ingredient.id in shop_dictary:
-    #             shop_dictary[ingredient.id] = (
-    #                 shop_dictary[ingredient.id][0],
-    #                 shop_dictary[ingredient.id][1] + amount
-    #             )
-    #         else:
-    #             shop_dictary[ingredient.id] = (
-    #                 ingredient.__str__(),
-    #                 amount)
+    @action(detail=False, permission_classes=[IsAuthenticated])
+    def download_shopping_cart(self, request):
+        ingredients = RecipesIngredient.objects.filter(
+            recipe__carts__user=request.user).values(
+            'ingredients__name',
+            'ingredients__measurement_unit').annotate(total=sum('amount'))
+        shopping_list = 'Список покупок:\n\n'
+        for number, ingredient in enumerate(ingredients, start=1):
+            shopping_list += (
+                f'{ingredient["ingredients__name"]}: '
+                f'{ingredient["total"]} '
+                f'{ingredient["ingredients__measurement_unit"]}\n')
+
+        cart = 'shopping-list.txt'
+        response = HttpResponse(shopping_list, content_type='text/plain')
+        response['Content-Disposition'] = (f'attachment;'
+                                           f'filename={cart}')
+        return response
 
     # def get_queryset(self):
     #     user = self.request.user
     #     queryset = Recipes.objects.all()
     #     tags = self.request.data.get('tags')
     #     if tags:
-    #         queryset = queryset and Recipes.objects.filter(tags__slug__in=tags)
+    #         queryset = queryset and Recipes.objects.filter(
+        # tags__slug__in=tags)
     #     if user.is_anonymous:
     #         return queryset
     #     try:
@@ -173,19 +172,20 @@ class UsersViewSet(viewsets.ModelViewSet):
             data = UsersSerializer(self.request.user).data
             return Response(data)
 
-    @action(detail=True, methods=['post', 'delete'],)
-    def subscribe(self, request, id):
-        author = get_object_or_404(User, id=id)
+    # def subscriptions(self, request):
+    #     queryset = Follow.objects.filter(user=request.user)
+    #     page = self.paginate_queryset(queryset)
+    #     serializer = SubscribeAuthorSerializer(page, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthenticated])
+    def subscriptions(self, request, id):
+        author = get_object_or_404(UserProfile, id=id)
         if self.request.method == 'POST':
             if request.user != author:
                 Follow.objects.create(user=request.user, author=author)
                 data = UsersSerializer(author).data
                 return Response(data)
-
-
-class SubscriptionsViewSet(viewsets.ModelViewSet):
-    queryset = Follow.objects.all()
-    permission_classes = [AllowAny]
 
 
 class ChangePasswordView(generics.UpdateAPIView):

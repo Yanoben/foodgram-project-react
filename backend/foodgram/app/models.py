@@ -61,27 +61,13 @@ class Ingredients(models.Model):
         max_length=10, verbose_name='measurement_unit', blank=False)
 
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.name} {self.measurement_unit}'
 
     class Meta:
         verbose_name = 'ingredients'
 
 
 class Recipes(models.Model):
-    # author = models.ForeignKey(UserProfile, on_delete=models.CASCADE,
-    #                            related_name='recipes')
-    # ingredients = models.ManyToManyField(Ingredients,
-    #                                      through='RecipesIngredient',
-    #                                      related_name="recipes")
-    # tags = models.ForeignKey(Tags, on_delete=models.CASCADE,
-    #                          related_name='recipes')
-    # image = models.ImageField()
-    # name = models.CharField(default='name', max_length=200)
-    # text = models.TextField(default='Text')
-    # cooking_time = models.IntegerField(default='1')
-
-    # def __str__(self):
-    #     return self.name
     name = models.CharField(
         max_length=200,
         verbose_name="Название рецепта",
