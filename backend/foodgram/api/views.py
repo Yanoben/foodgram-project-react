@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
-# from api.filters import RecipeTagFilter
+from api.filters import RecipeTagFilter, IngredientsFilter
 from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
 from app.models import (Favorite, Follow, RecipesIngredient, ShoppingCart,
                         Tags, Ingredients, Recipes)
@@ -47,12 +47,14 @@ class IngredientsViewSet(ModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (AllowAny,)
+    filterset_class = IngredientsFilter
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
     # permission_classes = (IsAdminUserOrReadOnly,)
     permission_classes = [AllowAny]
+    # serializer_class = RetrieveRecipesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend, )
     # filterset_class = RecipeTagFilter
@@ -109,7 +111,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     #     tags = self.request.data.get('tags')
     #     if tags:
     #         queryset = queryset and Recipes.objects.filter(
-        # tags__slug__in=tags)
+    #             tags__slug__in=tags)
     #     if user.is_anonymous:
     #         return queryset
     #     try:
@@ -124,11 +126,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
     #                 author=get_object_or_404(User, id=author_id))
     #                 )
 
-        # if self.request.data.get('is_favorited') == 1:
-        #     queryset = queryset and user.favorite_recipes.all()
-        # if self.request.data.get('is_in_shopping_cart') == 1:
-        #     queryset = queryset and user.shopping_cart_recipes.all()
-        # return queryset
+    #     if self.request.data.get('is_favorited') == 1:
+    #         queryset = queryset and user.favorite_recipes.all()
+    #     if self.request.data.get('is_in_shopping_cart') == 1:
+    #         queryset = queryset and user.shopping_cart_recipes.all()
+    #     return queryset
 
 
 class APISignup(APIView):
@@ -172,20 +174,25 @@ class UsersViewSet(viewsets.ModelViewSet):
             data = UsersSerializer(self.request.user).data
             return Response(data)
 
-    # def subscriptions(self, request):
-    #     queryset = Follow.objects.filter(user=request.user)
-    #     page = self.paginate_queryset(queryset)
-    #     serializer = SubscribeAuthorSerializer(page, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-    @action(detail=False, methods=['get'],
+    @action(detail=False, methods=['get', 'post'],
             permission_classes=[IsAuthenticated])
-    def subscriptions(self, request, id):
+    def subscribe(self, request, id):
         author = get_object_or_404(UserProfile, id=id)
         if self.request.method == 'POST':
             if request.user != author:
                 Follow.objects.create(user=request.user, author=author)
                 data = UsersSerializer(author).data
                 return Response(data)
+
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthenticated])
+    def subscriptions(self, request):
+        queryset = Follow.objects.filter(user=request.user)
+        return queryset
+
+        # page = self.paginate_queryset(queryset)
+        # serializer = SubscribeAuthorSerializer(page, many=True)
+        # return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(generics.UpdateAPIView):

@@ -1,6 +1,6 @@
 from django_filters.rest_framework import filters, FilterSet
 
-from app.models import Recipes, Tags
+from app.models import Recipes, Tags, Ingredients
 
 
 class RecipeTagFilter(FilterSet):
@@ -64,3 +64,30 @@ class RecipeTagFilter(FilterSet):
     # class Meta:
     #     model = Recipes
     #     fields = ('tags', 'author')
+
+
+# class IngredientsFilter(FilterSet):
+#     ingredients = filters.ModelMultipleChoiceFilter(
+#         field_name='ingredients__name',
+#         to_field_name='name',
+#         queryset=Ingredients.objects.all(),
+#         method='get_ingredient'
+#     )
+
+#     def get_ingredient(self, queryset, name):
+#         queryset = queryset.filter(name=name)
+#         return queryset
+
+#     class Meta:
+#         model = Ingredients
+#         fields = [
+#             'name',
+#         ]
+
+
+class IngredientsFilter(FilterSet):
+    name = filters.CharFilter(field_name='name', lookup_expr='istartswith')
+
+    class Meta:
+        model = Ingredients
+        fields = ['name']

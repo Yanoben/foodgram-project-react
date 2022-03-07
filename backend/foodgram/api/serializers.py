@@ -1,3 +1,4 @@
+from asyncore import read
 from rest_framework.validators import UniqueTogetherValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
@@ -121,21 +122,17 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredients.id')
-    name = serializers.ReadOnlyField(source='ingredients.name')
-    measurement_unit = serializers.ReadOnlyField(
-        source='ingredients.measurement_unit')
-    amount = serializers.IntegerField()
+    amount = serializers.ReadOnlyField(source='recipesingredient.amount')
 
     class Meta:
-        model = RecipesIngredient
+        model = Ingredients
         fields = ('id', 'name', 'measurement_unit', 'amount')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=RecipesIngredient.objects.all(),
-                fields=['ingredients', 'recipes']
-            )
-        ]
+        # validators = [
+        #     UniqueTogetherValidator(
+        #         queryset=RecipesIngredient.objects.all(),
+        #         fields=['ingredient', 'recipe']
+        #     )
+        # ]
 
 
 class IngredientToCreateRecipeSerializer(serializers.ModelSerializer):
@@ -150,8 +147,7 @@ class IngredientToCreateRecipeSerializer(serializers.ModelSerializer):
 
 class CreateRecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientToCreateRecipeSerializer(many=True, read_only=True)
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tags.objects.all(),
-                                              many=True)
+    tags = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
     image = Base64ImageField()
 
     class Meta:
@@ -165,7 +161,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         for ingredient in ingredients:
-            IngredientAmountSerializer.objects.create(
+            RecipesIngredient.objects.create(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount'),
@@ -175,7 +171,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         image = validated_data.pop('image')
         ingredients_data = validated_data.pop('ingredients')
         recipe = Recipes.objects.create(image=image, **validated_data)
-        tags_data = self.validated_data.tags
+        tags_data = self.initial_data.get('tags')
         recipe.tags.set(tags_data)
         self.create_ingredients(ingredients_data, recipe)
         return recipe
@@ -222,7 +218,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Double ingredients'
                 )
-            if ingredient_item['amount'] <= 0:
+            if int(ingredient_item['amount']) <= 0:
                 raise serializers.ValidationError({
                     'amount': 'Количество не может быть меньше нуля'
                 })
@@ -335,9 +331,8 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
 class RetrieveRecipesSerializer(serializers.ModelSerializer):
     author = UsersSerializer(read_only=True)
-    # tags = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    tags = TagSerializer(many=True)
-    ingredients = IngredientToCreateRecipeSerializer(many=True)
+    tags = TagSerializer(many=True, read_only=True)
+    ingredients = IngredientAmountSerializer(many=True)
     is_favorited = serializers.BooleanField(read_only=True, default=False)
     is_in_shopping_cart = serializers.BooleanField(read_only=True,
                                                    default=False)
