@@ -105,33 +105,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
                                            f'filename={cart}')
         return response
 
-    # def get_queryset(self):
-    #     user = self.request.user
-    #     queryset = Recipes.objects.all()
-    #     tags = self.request.data.get('tags')
-    #     if tags:
-    #         queryset = queryset and Recipes.objects.filter(
-    #             tags__slug__in=tags)
-    #     if user.is_anonymous:
-    #         return queryset
-    #     try:
-    #         recipe_id = self.kwargs['pk']
-    #         return Recipes.objects.get(id=recipe_id)
-    #     except KeyError:
-    #         recipe_id = None
-    #     author_id = self.request.data.get('author')
-    #     if author_id:
-    #         queryset = (
-    #             queryset and Recipes.objects.filter(
-    #                 author=get_object_or_404(User, id=author_id))
-    #                 )
-
-    #     if self.request.data.get('is_favorited') == 1:
-    #         queryset = queryset and user.favorite_recipes.all()
-    #     if self.request.data.get('is_in_shopping_cart') == 1:
-    #         queryset = queryset and user.shopping_cart_recipes.all()
-    #     return queryset
-
 
 class APISignup(APIView):
 
@@ -189,10 +162,6 @@ class UsersViewSet(viewsets.ModelViewSet):
     def subscriptions(self, request):
         queryset = Follow.objects.filter(user=request.user)
         return queryset
-
-        # page = self.paginate_queryset(queryset)
-        # serializer = SubscribeAuthorSerializer(page, many=True)
-        # return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(generics.UpdateAPIView):
