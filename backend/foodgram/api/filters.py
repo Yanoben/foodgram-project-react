@@ -10,31 +10,31 @@ class RecipeTagFilter(FilterSet):
         to_field_name='slug',
         queryset=Tags.objects.all(),
     )
-    is_favorited = filters.BooleanFilter(method='get_is_favorited')
-    is_in_shopping_cart = filters.BooleanFilter(
-        method='get_is_in_shopping_cart')
+    # is_favorited = filters.BooleanFilter(method='get_is_favorited')
+    # is_in_shopping_cart = filters.BooleanFilter(
+    #     method='get_is_in_shopping_cart')
 
     class Meta:
         model = Recipes
         fields = [
-            'author',
+            'author', 'tags'
         ]
 
-    def get_is_favorited(self, queryset, name, value):
-        if not value:
-            return queryset
-        if not self.request.user.is_authenticated:
-            return queryset
-        favorites = self.request.user.favorites.all()
-        return queryset.filter(
-            pk__in=(favorites.values_list('id', flat=True,))
-        )
+    # def get_is_favorited(self, queryset, name, value):
+    #     if not value:
+    #         return queryset
+    #     if not self.request.user.is_authenticated:
+    #         return queryset
+    #     favorites = self.request.user.favorites.all()
+    #     return queryset.filter(
+    #         pk__in=(favorites.values_list('id', flat=True,))
+    #     )
 
-    def get_is_in_shopping_cart(self, queryset, name, value):
-        if not value:
-            return queryset
-        if not self.request.user.is_authenticated:
-            return queryset
+    # def get_is_in_shopping_cart(self, queryset, name, value):
+    #     if not value:
+    #         return queryset
+    #     if not self.request.user.is_authenticated:
+    #         return queryset
     #     if not self.request.user.shopping_cart.recipes.exists():
     #         return queryset
     #     recipes = (

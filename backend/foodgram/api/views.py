@@ -57,7 +57,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     # serializer_class = RetrieveRecipesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend, )
-    # filterset_class = RecipeTagFilter
+    filterset_class = RecipeTagFilter
 
     def perform_create(self, serializer):
         return serializer.save(author=self.request.user)
@@ -75,11 +75,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
             data = RecipeFollowSerializer(recipe).data
             return Response(data)
 
-    @action(detail=True, methods=['post', 'delete'],
+    @action(detail=True, methods=['get', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         recipe = Recipes.objects.get(pk=pk)
-        if request.method == 'POST':
+        if request.method == 'GET':
             return ShoppingCart.objects.create(
                 user=request.user, recipe=recipe)
         if request.method == 'DELETE':
@@ -89,7 +89,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         ingredients = RecipesIngredient.objects.filter(
-            recipe__carts__user=request.user).values(
+            recipe__user=request.user).values(
             'ingredients__name',
             'ingredients__measurement_unit').annotate(total=sum('amount'))
         shopping_list = 'Список покупок:\n\n'
@@ -160,8 +160,9 @@ class UsersViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        queryset = Follow.objects.filter(user=request.user)
-        return queryset
+        pass
+        # queryset = Follow.objects.filter(user=request.user)
+        # return Response(queryset)
 
 
 class ChangePasswordView(generics.UpdateAPIView):
