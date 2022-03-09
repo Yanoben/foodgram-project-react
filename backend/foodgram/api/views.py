@@ -1,35 +1,31 @@
+from api.filters import IngredientsFilter, RecipeTagFilter
+from app.models import (Favorite, Follow, Ingredients, Recipes,
+                        RecipesIngredient, ShoppingCart, Tag)
+from django.conf import settings
 from django.http import HttpResponse
-from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-# from rest_framework.filters import SearchFilter
+from rest_framework import generics, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.shortcuts import get_object_or_404
-from api.filters import RecipeTagFilter, IngredientsFilter
-from .permissions import (AdminAuthorPermission, IsAdminUserOrReadOnly)
-from app.models import (Favorite, Follow, RecipesIngredient, ShoppingCart,
-                        Tags, Ingredients, Recipes)
-from .serializers import (SignupSerializer, GetTokenSerializer,
-                          RetrieveRecipesSerializer, TagSerializer,
-                          IngredientSerializer, UsersSerializer,
-                          ChangePasswordSerializer, CreateRecipeSerializer,
-                          RecipeFollowSerializer)
-from django.conf import settings
 from users.models import UserProfile
-from rest_framework import generics
-# from .pagination import CustomPagination
 
+from .permissions import AdminAuthorPermission, IsAdminUserOrReadOnly
+from .serializers import (ChangePasswordSerializer, CreateRecipeSerializer,
+                          GetTokenSerializer, IngredientSerializer,
+                          RecipeFollowSerializer, RetrieveRecipesSerializer,
+                          SignupSerializer, TagSerializer, UsersSerializer)
 
 User = settings.AUTH_USER_MODEL
 
 
 class TagsViewSet(ModelViewSet):
-    queryset = Tags.objects.all()
+    queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
     permission_classes = (IsAdminUserOrReadOnly,)
@@ -52,7 +48,6 @@ class IngredientsViewSet(ModelViewSet):
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
-    # permission_classes = (IsAdminUserOrReadOnly,)
     permission_classes = [AllowAny]
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend, )
@@ -73,6 +68,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             Favorite.objects.create(user=request.user, recipe=recipe)
             data = RecipeFollowSerializer(recipe).data
             return Response(data)
+        if request.method == 'DELETE':
+            return self.delete_obj(Follow, request.user, pk)
 
     @action(detail=True, methods=['get', 'delete'],
             permission_classes=[IsAuthenticated])
@@ -83,7 +80,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 user=request.user, recipe=recipe)
         if request.method == 'DELETE':
             return self.delete_obj(ShoppingCart, request.user, pk)
-        return None
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
@@ -136,7 +132,6 @@ class APIGetToken(APIView):
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UsersSerializer
-    # permission_classes = (IsAuthenticated, )
     lookup_field = 'id'
 
     @action(detail=False, methods=['get'],
@@ -168,64 +163,3 @@ class ChangePasswordView(generics.UpdateAPIView):
     queryset = UserProfile.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = ChangePasswordSerializer
-
-
-# class RecipeViewSet(viewsets.ModelViewSet):
-#     queryset = Recipe.objects.all()
-#     serializer_class = RecipeSerializer
-#     permission_classes = (IsOwnerOrAdminOrReadOnly,)
-#     pagination_class = CustomPagination
-#     filter_backend = (DjangoFilterBackend, )
-#     filterset_class = RecipeFilter
-
-#     def perform_create(self, serializer):
-#         return serializer.save(author=self.request.user)
-
-#     @action(detail=True, permission_classes=[IsAuthenticated],
-#             methods=['POST'])
-#     def favorite(self, request, pk=None):
-#         serial_type = FavoritesSerializer
-#         serializer = add_favorite_or_cart(self, request, pk, serial_type)
-
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-#     @favorite.mapping.delete
-#     def delete_favorite(self, request, pk=None):
-#         model = Favorites
-#         delete_favorite_or_cart(self, request, pk, model)
-
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-
-#     @action(detail=True, permission_classes=[IsAuthenticated],
-#             methods=['POST'])
-#     def shopping_cart(self, request, pk=None):
-#         serial_type = CartSerializer
-#         serializer = add_favorite_or_cart(self, request, pk, serial_type)
-
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-#     @shopping_cart.mapping.delete
-#     def delete_shopping_cart(self, request, pk=None):
-#         model = Cart
-#         delete_favorite_or_cart(self, request, pk, model)
-
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-
-#     @action(detail=False, permission_classes=[IsAuthenticated])
-#     def download_shopping_cart(self, request):
-#         ingredients = IngredientsInRecipe.objects.filter(
-#             recipe__carts__user=request.user).values(
-#             'ingredients__name',
-#             'ingredients__measurement_unit').annotate(total=Sum('amount'))
-#         shopping_list = 'Список покупок:\n\n'
-#         for number, ingredient in enumerate(ingredients, start=1):
-#             shopping_list += (
-#                 f'{ingredient["ingredients__name"]}: '
-#                 f'{ingredient["total"]} '
-#                 f'{ingredient["ingredients__measurement_unit"]}\n')
-
-#         cart = 'shopping-list.txt'
-#         response = HttpResponse(shopping_list, content_type='text/plain')
-#         response['Content-Disposition'] = (f'attachment;'
-#                                            f'filename={cart}')
-#         return response

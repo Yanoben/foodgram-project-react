@@ -1,48 +1,7 @@
-from django.db import models
-from users.models import UserProfile
 from django.core.validators import MinValueValidator
+from django.db import models
 from django.db.models import UniqueConstraint
-
-
-# class Recipe(models.Model):
-#     name = models.CharField(
-#         max_length=200,
-#         verbose_name="Название рецепта",
-
-#     )
-#     ingredients = models.ManyToManyField(
-#         Ingredient,
-#         verbose_name="Ингредиенты",
-#         related_name="recipes",
-#         through="IngredientInRecipe"
-#     )
-#     tags = models.ManyToManyField(
-#         Tag,
-#         verbose_name="Тэги",
-#         related_name="recipes"
-#     )
-#     author = models.ForeignKey(
-#         User,
-#         verbose_name="Автор",
-#         related_name="recipes",
-#         on_delete=models.CASCADE
-#     )
-#     text = models.TextField(
-#         verbose_name="Текст рецепта"
-#     )
-#     image = models.ImageField(
-#         verbose_name="Картинка",
-#         upload_to='media/recipes/images/'
-#     )
-#     cooking_time = models.PositiveSmallIntegerField(
-#         verbose_name="Время приготовления в минутах",
-#         validators=(
-#             MinValueValidator(
-#                 1,
-#                 message="Минимальное время приготовления - одна минута"
-#             ),
-#         )
-#     )
+from users.models import UserProfile
 
 
 class Tag(models.Model):

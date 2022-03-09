@@ -1,17 +1,15 @@
-from asyncore import read
-from rest_framework.validators import UniqueTogetherValidator
+import base64
+import imghdr
+import uuid
+
+from app.models import (Favorite, Follow, Ingredients, Recipes,
+                        RecipesIngredient, ShoppingCart, Tag)
+from django.conf import settings
+from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from django.conf import settings
-from app.models import (Follow, Recipes, Tags, Ingredients, ShoppingCart,
-                        RecipesIngredient, Favorite)
-from users.models import UserProfile
 from six import string_types
-import base64
-import uuid
-from django.core.files.base import ContentFile
-import imghdr
-
+from users.models import UserProfile
 
 User = settings.AUTH_USER_MODEL
 
@@ -50,7 +48,7 @@ class Base64ImageField(serializers.ImageField):
 
             file_name = str(uuid.uuid4())[:12]
             file_extension = self.get_file_extension(file_name, decoded_file)
-            complete_file_name = "%s.%s" % (file_name, file_extension, )
+            complete_file_name = f'{file_name}.{file_extension}'
             data = ContentFile(decoded_file, name=complete_file_name)
 
         return super(Base64ImageField, self).to_internal_value(data)
@@ -58,7 +56,7 @@ class Base64ImageField(serializers.ImageField):
     def get_file_extension(self, file_name, decoded_file):
 
         extension = imghdr.what(file_name, decoded_file)
-        extension = "jpg" if extension == "jpeg" else extension
+        extension = 'jpg' if extension == 'jpeg' else extension
 
         return extension
 
@@ -66,8 +64,8 @@ class Base64ImageField(serializers.ImageField):
 class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ("id", "name", "color", "slug")
-        model = Tags
+        fields = ('id', 'name', 'color', 'slug')
+        model = Tag
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -75,23 +73,6 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'name', 'measurement_unit')
         model = Ingredients
-
-
-class IngredientInRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source="ingredient.id")
-    name = serializers.ReadOnlyField(source="ingredient.name")
-    measurement_unit = serializers.ReadOnlyField(
-        source="ingredient.measurement_unit"
-    )
-
-    class Meta:
-        model = RecipesIngredient
-        fields = (
-            "id",
-            "name",
-            "measurement_unit",
-            "amount",
-        )
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
@@ -138,7 +119,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         image = validated_data.pop('image')
         ingredients_data = validated_data.pop('ingredients')
         recipe = Recipes.objects.create(image=image, **validated_data)
-        tags_data = self.initial_data.get('tags')
+        tags_data = validated_data.pop('tags')
         recipe.tags.set(tags_data)
         self.create_ingredients(ingredients_data, recipe)
         return recipe
@@ -154,7 +135,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return super().update(recipe, validated_data)
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
+        ingredients = data.get('ingredients')
         if not ingredients:
             raise serializers.ValidationError(
                 {'ingredients': 'ingredients error'}
@@ -194,38 +175,6 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             return False
         return ShoppingCart.objects.filter(
             user=request.user, recipe=obj).exists()
-    # def favorite_or_shopping_cart_same_logic(self, request, cls, err_msg):
-    #     user = request.user
-    #     recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
-    #     obj = cls.objects.filter(user=user, recipe=recipe)
-    #     if request.method == 'POST':
-    #         if obj.exists():
-    #             data = {'errors': f'Рецепт уже в {err_msg}!'}
-    #             return response.Response(
-    #                 data=data, status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #         cls.objects.create(user=user, recipe=recipe)
-    #         serializer = self.get_serializer(recipe)
-    #         return response.Response(
-    #             data=serializer.data, status=status.HTTP_201_CREATED
-    #         )
-    #     if obj.exists():
-    #         obj.delete()
-    #         return response.Response(status=status.HTTP_204_NO_CONTENT)
-    #     data = {'errors': f'Рецепт отсутствует в {err_msg}!'}
-    #     return response.Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-
-    # @decorators.action(detail=True, methods=['POST', 'DELETE'])
-    # def favorite(self, request, pk=None):
-    #     cls = Favorite
-    #     err_msg = 'избранном'
-    #     return self.favorite_or_shopping_cart_same_logic(request, cls, err_msg)
-
-    # @decorators.action(detail=True, methods=['POST', 'DELETE'])
-    # def shopping_cart(self, request, pk=None):
-    #     cls = ShoppingCart
-    #     err_msg = 'списке покупок'
-    #     return self.favorite_or_shopping_cart_same_logic(request, cls, err_msg)
 
 
 class RetrieveRecipesSerializer(serializers.ModelSerializer):
@@ -317,37 +266,3 @@ class RecipeFollowSerializer(serializers.ModelSerializer):
         model = Recipes
         fields = ('id', 'name', 'cooking_time',)
         read_only_fields = ('id',)
-
-
-# class UserSerializer(serializers.ModelSerializer):
-#     is_subscribed = serializers.SerializerMethodField(read_only=True)
-
-#     class Meta:
-#         model = User
-#         fields = [
-#             'email',
-#             'id',
-#             'username',
-#             'first_name',
-#             'last_name',
-#             'is_subscribed',
-#             'password',
-#         ]
-#         extra_kwargs = {
-#             'password': {'write_only': True}
-#         }
-
-#     def get_is_subscribed(self, obj):
-#         user = self.context['request'].user
-#         if not user.is_authenticated:
-#             return False
-#         return Subscription.objects.filter(
-#             subscriber=user,
-#             subscription=obj,
-#         ).exists()
-
-#     def create(self, validated_data):
-#         validated_data['password'] = (
-#             make_password(validated_data.pop('password'))
-#         )
-#         return super().create(validated_data)
