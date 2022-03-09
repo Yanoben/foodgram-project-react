@@ -30,19 +30,19 @@ class RecipeTagFilter(FilterSet):
     #         pk__in=(favorites.values_list('id', flat=True,))
     #     )
 
-    # def get_is_in_shopping_cart(self, queryset, name, value):
-    #     if not value:
-    #         return queryset
-    #     if not self.request.user.is_authenticated:
-    #         return queryset
-    #     if not self.request.user.shopping_cart.recipes.exists():
-    #         return queryset
-    #     recipes = (
-    #         self.request.user.shopping_cart.recipes.all()
-    #     )
-    #     return queryset.filter(
-    #         pk__in=(recipes.values_list('id', flat=True))
-    #     )
+    def get_is_in_shopping_cart(self, queryset, name, value):
+        if not value:
+            return queryset
+        if not self.request.user.is_authenticated:
+            return queryset
+        if not self.request.user.shopping_cart.recipes.exists():
+            return queryset
+        recipes = (
+            self.request.user.shopping_cart.recipes.all()
+        )
+        return queryset.filter(
+            pk__in=(recipes.values_list('id', flat=True))
+        )
 
     # def filter_is_favorited(self, queryset, name, value):
     #     user = self.request.user

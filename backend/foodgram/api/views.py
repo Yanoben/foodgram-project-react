@@ -54,7 +54,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
     # permission_classes = (IsAdminUserOrReadOnly,)
     permission_classes = [AllowAny]
-    # serializer_class = RetrieveRecipesSerializer
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeTagFilter
@@ -230,12 +229,3 @@ class ChangePasswordView(generics.UpdateAPIView):
 #         response['Content-Disposition'] = (f'attachment;'
 #                                            f'filename={cart}')
 #         return response
-
-
-# class IngredientViewSet(viewsets.ModelViewSet):
-#     queryset = Ingredient.objects.all()
-#     serializer_class = IngredientSerializer
-#     paginator = None
-#     permission_classes = (AllowAny, )
-#     filter_backends = [IngredientSearchFilter]
-#     search_fields = ('^name',)
