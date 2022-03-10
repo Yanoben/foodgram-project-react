@@ -1,6 +1,3 @@
-from api.filters import IngredientsFilter, RecipeTagFilter
-from app.models import (Favorite, Follow, Ingredients, Recipes,
-                        RecipesIngredient, ShoppingCart, Tag)
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -13,9 +10,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from users.models import UserProfile
 
-from .permissions import AdminAuthorPermission, IsAdminUserOrReadOnly
+
+from api.filters import IngredientsFilter, RecipeTagFilter
+from app.models import (Favorite, Follow, Ingredient, Recipe,
+                        RecipeIngredient, ShoppingCart, Tag)
+from users.models import UserProfile
+from .permissions import IsAdminUserOrReadOnly
 from .serializers import (ChangePasswordSerializer, CreateRecipeSerializer,
                           GetTokenSerializer, IngredientSerializer,
                           RecipeFollowSerializer, RetrieveRecipesSerializer,
@@ -39,7 +40,7 @@ class TagsViewSet(ModelViewSet):
 
 
 class IngredientsViewSet(ModelViewSet):
-    queryset = Ingredients.objects.all()
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (AllowAny,)
@@ -47,7 +48,7 @@ class IngredientsViewSet(ModelViewSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    queryset = Recipes.objects.all()
+    queryset = Recipe.objects.all()
     permission_classes = [AllowAny]
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend, )
@@ -63,7 +64,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post', 'delete'], )
     def favorite(self, request, pk):
-        recipe = get_object_or_404(Recipes, pk=pk)
+        recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
             Favorite.objects.create(user=request.user, recipe=recipe)
             data = RecipeFollowSerializer(recipe).data
@@ -74,7 +75,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        recipe = Recipes.objects.get(pk=pk)
+        recipe = Recipe.objects.get(pk=pk)
         if request.method == 'GET':
             return ShoppingCart.objects.create(
                 user=request.user, recipe=recipe)
@@ -83,7 +84,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        ingredients = RecipesIngredient.objects.filter(
+        ingredients = RecipeIngredient.objects.filter(
             recipe__user=request.user).values(
             'ingredients__name',
             'ingredients__measurement_unit').annotate(total=sum('amount'))
@@ -154,9 +155,8 @@ class UsersViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        pass
-        # queryset = Follow.objects.filter(user=request.user)
-        # return Response(queryset)
+        queryset = Follow.objects.filter(user=request.user)
+        return Response(queryset)
 
 
 class ChangePasswordView(generics.UpdateAPIView):

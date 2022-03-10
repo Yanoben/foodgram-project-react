@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
+
 from users.models import UserProfile
 
 
@@ -17,7 +18,7 @@ class Tag(models.Model):
         verbose_name_plural = 'tags'
 
 
-class Ingredients(models.Model):
+class Ingredient(models.Model):
     name = models.CharField(
         max_length=100, verbose_name='name')
     measurement_unit = models.CharField(
@@ -31,17 +32,16 @@ class Ingredients(models.Model):
         verbose_name_plural = 'ingredients'
 
 
-class Recipes(models.Model):
+class Recipe(models.Model):
     name = models.CharField(
         max_length=200,
         verbose_name="name",
 
     )
     ingredients = models.ManyToManyField(
-        Ingredients,
+        Ingredient,
         verbose_name='ingredients',
-        related_name="recipes",
-        through="RecipesIngredient"
+        through="RecipeIngredient"
     )
     tags = models.ManyToManyField(
         Tag,
@@ -80,10 +80,10 @@ class Recipes(models.Model):
         return self.name
 
 
-class RecipesIngredient(models.Model):
-    recipe = models.ForeignKey(Recipes, on_delete=models.CASCADE,
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
                                related_name='ingredient_to_recipe')
-    ingredient = models.ForeignKey(Ingredients,
+    ingredient = models.ForeignKey(Ingredient,
                                    on_delete=models.CASCADE,
                                    related_name='ingredient_to_recipe')
     amount = models.IntegerField(default=1, related_name='amount')
@@ -108,7 +108,7 @@ class Favorite(models.Model):
         verbose_name='user'
     )
     recipe = models.ForeignKey(
-        Recipes,
+        Recipe,
         on_delete=models.CASCADE,
         related_name='favorites',
         verbose_name='recipe'
@@ -130,7 +130,7 @@ class ShoppingCart(models.Model):
         verbose_name='user'
     )
     recipe = models.ForeignKey(
-        Recipes,
+        Recipe,
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         verbose_name='recipe'

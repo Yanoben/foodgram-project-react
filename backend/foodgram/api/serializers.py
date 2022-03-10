@@ -1,14 +1,10 @@
-import base64
-import imghdr
-import uuid
-
-from app.models import (Favorite, Follow, Ingredients, Recipes,
-                        RecipesIngredient, ShoppingCart, Tag)
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from six import string_types
+
+from .fields import Base64ImageField
+from app.models import (Favorite, Follow, Ingredient, Recipe,
+                        RecipeIngredient, ShoppingCart, Tag)
 from users.models import UserProfile
 
 User = settings.AUTH_USER_MODEL
@@ -34,33 +30,6 @@ class UsersSerializer(serializers.ModelSerializer):
         return user
 
 
-class Base64ImageField(serializers.ImageField):
-
-    def to_internal_value(self, data):
-        if isinstance(data, string_types):
-            if 'data:' in data and ';base64,' in data:
-                header, data = data.split(';base64,')
-
-            try:
-                decoded_file = base64.b64decode(data)
-            except TypeError:
-                self.fail('invalid_image')
-
-            file_name = str(uuid.uuid4())[:12]
-            file_extension = self.get_file_extension(file_name, decoded_file)
-            complete_file_name = f'{file_name}.{file_extension}'
-            data = ContentFile(decoded_file, name=complete_file_name)
-
-        return super(Base64ImageField, self).to_internal_value(data)
-
-    def get_file_extension(self, file_name, decoded_file):
-
-        extension = imghdr.what(file_name, decoded_file)
-        extension = 'jpg' if extension == 'jpeg' else extension
-
-        return extension
-
-
 class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -72,24 +41,24 @@ class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ('id', 'name', 'measurement_unit')
-        model = Ingredients
+        model = Ingredient
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
-    amount = serializers.ReadOnlyField(source='recipesingredient.amount')
+    amount = serializers.ReadOnlyField(source='recipeingredient.amount')
 
     class Meta:
-        model = Ingredients
+        model = Ingredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class IngredientToCreateRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredients.objects.all(), many=True)
+        queryset=Ingredient.objects.all(), many=True)
     amount = serializers.IntegerField()
 
     class Meta:
-        model = RecipesIngredient
+        model = RecipeIngredient
         fields = ("id", "amount")
 
 
@@ -99,7 +68,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
 
     class Meta:
-        model = Recipes
+        model = Recipe
         fields = (
             'ingredients', 'tags',
             'image', 'name',
@@ -109,7 +78,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         for ingredient in ingredients:
-            RecipesIngredient.objects.create(
+            RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount'),
@@ -118,7 +87,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         image = validated_data.pop('image')
         ingredients_data = validated_data.pop('ingredients')
-        recipe = Recipes.objects.create(image=image, **validated_data)
+        recipe = Recipe.objects.create(image=image, **validated_data)
         tags_data = validated_data.pop('tags')
         recipe.tags.set(tags_data)
         self.create_ingredients(ingredients_data, recipe)
@@ -143,7 +112,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         ingredient_list = []
         for ingredient_item in ingredients:
             ingredient = get_object_or_404(
-                Ingredients, id=ingredient_item['id']
+                Ingredient, id=ingredient_item['id']
             )
             if ingredient in ingredient_list:
                 raise serializers.ValidationError(
@@ -186,7 +155,7 @@ class RetrieveRecipesSerializer(serializers.ModelSerializer):
                                                    default=False)
 
     class Meta:
-        model = Recipes
+        model = Recipe
         fields = (
             'id', 'tags', 'author',
             'ingredients', 'is_favorited',
@@ -263,6 +232,6 @@ class FollowSerializer(serializers.ModelSerializer):
 class RecipeFollowSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Recipes
+        model = Recipe
         fields = ('id', 'name', 'cooking_time',)
         read_only_fields = ('id',)
