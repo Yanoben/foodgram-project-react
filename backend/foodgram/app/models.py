@@ -86,7 +86,7 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(Ingredient,
                                    on_delete=models.CASCADE,
                                    related_name='ingredient_to_recipe')
-    amount = models.IntegerField(default=1, related_name='amount')
+    amount = models.IntegerField(default=1)
 
     class Meta:
         constraints = [
@@ -159,7 +159,7 @@ class Follow(models.Model):
                                verbose_name='author')
 
     class Meta:
-        fields = UniqueConstraint(
+        constraints = UniqueConstraint(
             fields=['user', 'author'], name='follow')
         verbose_name = 'follow'
         verbose_name_plural = 'follows'
