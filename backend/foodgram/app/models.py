@@ -10,12 +10,12 @@ class Tag(models.Model):
     color = models.CharField(max_length=7, verbose_name='color')
     slug = models.SlugField(unique=True, verbose_name='tag_slug')
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'tag'
         verbose_name_plural = 'tags'
+
+    def __str__(self):
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -24,55 +24,55 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(
         max_length=10, verbose_name='measurement_unit')
 
-    def __str__(self):
-        return f'{self.name} {self.measurement_unit}'
-
     class Meta:
         verbose_name = 'ingredient'
         verbose_name_plural = 'ingredients'
+
+    def __str__(self):
+        return f'{self.name} {self.measurement_unit}'
 
 
 class Recipe(models.Model):
     name = models.CharField(
         max_length=200,
-        verbose_name="name",
+        verbose_name='name',
 
     )
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='ingredients',
-        through="RecipeIngredient"
+        through='RecipeIngredient'
     )
     tags = models.ManyToManyField(
         Tag,
-        verbose_name="tags",
-        related_name="recipes"
+        verbose_name='tags',
+        related_name='recipes'
     )
     author = models.ForeignKey(
         UserProfile,
-        verbose_name="author",
-        related_name="recipes",
+        verbose_name='author',
+        related_name='recipes',
         on_delete=models.CASCADE
     )
     text = models.TextField(
-        verbose_name="text"
+        verbose_name='text'
     )
     image = models.ImageField(
-        verbose_name="image",
+        verbose_name='image',
         upload_to='media/recipes/images/'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        verbose_name="cooking_time",
+        verbose_name='cooking_time',
         validators=(
             MinValueValidator(
                 1,
-                message="Минимальное время приготовления - одна минута"
+                message='Минимальное время приготовления - одна минута'
             ),
         )
     )
 
     class Meta:
-        verbose_name = "recipe"
+        verbose_name = 'recipe'
         verbose_name_plural = 'recipes'
         ordering = ['-id']
 
@@ -114,12 +114,16 @@ class Favorite(models.Model):
         verbose_name='recipe'
     )
 
-    def __str__(self):
-        return f'{self.user}, {self.recipe}'
-
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='shopping_cart')
+        ]
         verbose_name = 'favorite'
         verbose_name_plural = 'favorites'
+
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'
 
 
 class ShoppingCart(models.Model):
@@ -136,9 +140,6 @@ class ShoppingCart(models.Model):
         verbose_name='recipe'
     )
 
-    def __str__(self):
-        return f'{self.user}, {self.recipe}'
-
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
@@ -146,6 +147,9 @@ class ShoppingCart(models.Model):
         ]
         verbose_name = 'shopping_cart'
         verbose_name_plural = 'shopping_carts'
+
+    def __str__(self):
+        return f'{self.user}, {self.recipe}'
 
 
 class Follow(models.Model):

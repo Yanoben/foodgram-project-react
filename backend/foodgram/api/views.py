@@ -11,10 +11,9 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
-
 from api.filters import IngredientsFilter, RecipeTagFilter
-from app.models import (Favorite, Follow, Ingredient, Recipe,
-                        RecipeIngredient, ShoppingCart, Tag)
+from app.models import (Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
+                        ShoppingCart, Tag)
 from users.models import UserProfile
 from .permissions import IsAdminUserOrReadOnly
 from .serializers import (ChangePasswordSerializer, CreateRecipeSerializer,
