@@ -2,10 +2,10 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .fields import Base64ImageField
 from app.models import (Favorite, Follow, Ingredient, Recipe,
                         RecipeIngredient, ShoppingCart, Tag)
 from users.models import UserProfile
+from .fields import Base64ImageField
 
 User = settings.AUTH_USER_MODEL
 
