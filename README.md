@@ -23,5 +23,5 @@ docker-compose exec backend python manage.py collectstatic
 http://178.154.193.114
 
 ## Данные Админки
-yasinabdurakhmanov@gmail.com@yandex.ru
+yasinabdurakhmanov@gmail.com
 qqaazz1122
