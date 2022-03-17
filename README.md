@@ -1,8 +1,6 @@
 # Foodgram
 Cервис для публикаций и обмена рецептами.
 
-[![foodgram_workflow](https://github.com/yanoben/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)](https://github.com/SergKuzora/foodgram-project-react/actions/workflows/foodgram_workflow.yml)
-
 ### Настройка проекта
 1. Запустите docker compose:
 ```bash
@@ -27,6 +25,3 @@ http://178.154.193.114
 ## Данные Админки
 yasinabdurakhmanov@gmail.com@yandex.ru
 qqaazz1122
-
-admin@example.com
-admin
